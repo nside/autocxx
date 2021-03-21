@@ -24,6 +24,7 @@ use std::collections::HashMap;
 // codegen_rs but currently Rust codegen happens everywhere... TODO
 pub(crate) use non_pod_struct::make_non_pod;
 
+use proc_macro2::TokenStream;
 use syn::{parse_quote, ForeignItem, Ident, Item, ItemForeignMod, ItemMod};
 
 use crate::types::{make_ident, Namespace};
@@ -63,7 +64,7 @@ impl<'a> RsCodeGenerator<'a> {
         all_apis: Vec<Api<FnAnalysis>>,
         include_list: &'a [String],
         bindgen_mod: ItemMod,
-    ) -> Vec<Item> {
+    ) -> (Vec<Item>, TokenStream) {
         let c = Self {
             include_list,
             bindgen_mod,
@@ -71,7 +72,7 @@ impl<'a> RsCodeGenerator<'a> {
         c.rs_codegen(all_apis)
     }
 
-    fn rs_codegen(mut self, all_apis: Vec<Api<FnAnalysis>>) -> Vec<Item> {
+    fn rs_codegen(mut self, all_apis: Vec<Api<FnAnalysis>>) -> (Vec<Item>, TokenStream) {
         // ... and now let's start to generate the output code.
         // First, the hierarchy of mods containing lots of 'use' statements
         // which is the final API exposed as 'ffi'.
@@ -125,14 +126,16 @@ impl<'a> RsCodeGenerator<'a> {
             })];
             all_items.push(Item::Mod(self.bindgen_mod));
         }
-        all_items.push(Item::Mod(parse_quote! {
+        let cxxbridge_mod = quote! {
             #[cxx::bridge]
             pub mod cxxbridge {
                 #(#bridge_items)*
             }
-        }));
+        };
+        let cxxbridge_mod_converted = cxx_gen::generate_rs(cxxbridge_mod.clone()).unwrap();
+        all_items.push(Item::Mod(syn::parse2(cxxbridge_mod_converted).unwrap()));
         all_items.append(&mut use_statements);
-        all_items
+        (all_items, cxxbridge_mod)
     }
 
     fn make_foreign_mod_unsafe(ifm: ItemForeignMod) -> Item {
