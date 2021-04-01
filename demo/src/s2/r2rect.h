@@ -45,6 +45,7 @@ class R2Rect {
   // The canonical empty rectangle.  Use is_empty() to test for empty
   // rectangles, since they have more than one representation.
   static R2Rect Empty();
+  static R2Rect Empty2();
 
   // Construct a rectangle from a center point and size in each dimension.
   // Both components of size should be non-negative, i.e. this method cannot
@@ -178,6 +179,10 @@ inline R2Rect::R2Rect() {
 }
 
 inline R2Rect R2Rect::Empty() {
+  return R2Rect(R1Interval::Empty(), R1Interval::Empty());
+}
+
+inline R2Rect R2Rect::Empty2() {
   return R2Rect(R1Interval::Empty(), R1Interval::Empty());
 }
 

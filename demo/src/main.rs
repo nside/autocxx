@@ -17,13 +17,15 @@ use autocxx::include_cpp;
 include_cpp! {
     #include "s2/util/math/vector.h"
 
+    #include "s2/r2.h"
     #include "s2/r2rect.h"
     safety!(unsafe_ffi)
+    generate!("R2Point")
     generate!("R2Rect")
-    generate!("R1Interval")
+    //block!("R1Interval") //uncomment to fix
 }
 
 fn main() {
-    let r = ffi::Rect::Empty();
+    let r = ffi::R2Rect::Empty2(); // R2Rect::Empty got dropped
     println!("Hello, world!");
 }
